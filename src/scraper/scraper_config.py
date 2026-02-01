@@ -1,0 +1,5 @@
+PROJECT_HOME = "C:\\Users\\19029\\project_git\\vibe_de"
+EXCEL_FILENAME = "Holdings details - Vanguard S&P 500 Index ETF - 2026-01-31.xlsx"
+VFV_HOLDING_EXCEL_PATH = f"{PROJECT_HOME}\\src\\scraper\\{EXCEL_FILENAME}"
+TEST_DATA_PATH = f"{PROJECT_HOME}\\test_data"
+S3_BUCKET_NAME = "panzerflow-personal-project"
