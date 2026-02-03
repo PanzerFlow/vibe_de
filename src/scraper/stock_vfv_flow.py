@@ -1,11 +1,10 @@
-import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, Generator
 
 import polars as pl
-from scraper_config import S3_BUCKET_NAME, TEST_DATA_PATH, VFV_HOLDING_EXCEL_PATH
-from util import upload_json_to_s3
+from scraper_config import S3_BUCKET_NAME, VFV_HOLDING_EXCEL_PATH
+from util import upload_data_to_s3
 from yfinance import Ticker
 
 logging.basicConfig(
@@ -52,24 +51,13 @@ class stock_etl_flow:
             except Exception as e:
                 logger.error(f"Error fetching data for {ticker_symbol}: {e}")
 
-    def store_data_locally(self) -> None:
-        logger.info("Storing stock data to JSON files")
-        for stock_data in self._get_ticker_summaries():
-            filename = TEST_DATA_PATH + f"/{stock_data['ticker']}.json"
-            logger.info(f"Storing data for {stock_data['ticker']} to {filename}")
-            with open(filename, "w") as f:
-                json.dump(stock_data, f, indent=2)
-        logger.info("Storing VFV dataframe to CSV")
-        self.vfv_pdf.write_csv(TEST_DATA_PATH + "/vfv_holdings.csv")
-        logger.info("Data storage completed")
-
     def store_data_to_s3(self) -> None:
         """Upload stock data to S3 with metadata"""
         logger.info(f"Uploading stock data to S3 bucket: {S3_BUCKET_NAME}")
 
         for stock_data in self._get_ticker_summaries():
             ticker = stock_data["ticker"]
-            s3_key = f"stocks/{ticker}.json"
+            s3_key = f"stocks/{ticker}.md"
 
             # Create metadata with ticker and timestamp
             metadata = {
@@ -78,7 +66,7 @@ class stock_etl_flow:
                 "sector": stock_data.get("sector", "unknown"),
             }
 
-            success = upload_json_to_s3(
+            success = upload_data_to_s3(
                 data=stock_data, bucket=S3_BUCKET_NAME, key=s3_key, metadata=metadata
             )
 

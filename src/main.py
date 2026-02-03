@@ -1,4 +1,8 @@
+import os
+
 from dotenv import load_dotenv
+from langchain_aws.retrievers import AmazonKnowledgeBasesRetriever
+from langchain_classic.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
@@ -9,17 +13,20 @@ model = ChatGoogleGenerativeAI(
     max_tokens=None,
     timeout=None,
     max_retries=2,
-    # other params...
 )
 
-messages = [
-    (
-        "system",
-        "You are an senior data engineer, help the user and answer questions about our metrics.",
-    ),
-    ("human", "What is ride completion rate?"),
-]
+retriever = AmazonKnowledgeBasesRetriever(
+    knowledge_base_id=os.getenv("AWS_KNOWLEDGE_BASE_ID"),
+    retrieval_config={"vectorSearchConfiguration": {"numberOfResults": 4}},
+)
+
 
 if __name__ == "__main__":
-    ai_msg = model.invoke(messages)
-    print(ai_msg)
+    # ai_msg = model.invoke(messages)
+
+    qa = RetrievalQA.from_chain_type(
+        llm=model, retriever=retriever, return_source_documents=True
+    )
+
+    res = qa("Recommend me a good tech stock based on recent news.")
+    print(res)
